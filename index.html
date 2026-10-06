@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pokémon Clicker</title>
+  <style>
+    :root {
+      --primary: #ef4444;
+      --primary-dark: #b91c1c;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --accent: #fbbf24;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: var(--card);
+      border-bottom: 2px solid var(--primary);
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      color: var(--accent);
+    }
+
+    .player-info {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex: 1;
+    }
+
+    .player-info input {
+      background: #334155;
+      border: 1px solid #475569;
+      color: white;
+      padding: 0.4rem 0.7rem;
+      border-radius: 6px;
+      width: 140px;
+    }
+
+    .color-picker {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      background: none;
+    }
+
+    header button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    header button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    /* ===== LAYOUT PRINCIPAL ===== */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 280px 1fr 260px;
+      gap: 1rem;
+      padding: 1rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ===== PANELES ===== */
+    .panel {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+    }
+
+    .panel h2 {
+      font-size: 1.1rem;
+      color: var(--accent);
+      border-bottom: 1px solid #334155;
+      padding-bottom: 0.5rem;
+    }
+
+    /* ===== ZONA CENTRAL ===== */
+    .center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      text-align: center;
+    }
+
+    .pokemon-container {
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .pokemon-img {
+      width: min(280px, 70vw);
+      height: auto;
+      transition: transform 0.15s ease;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
+    }
+
+    .pokemon-container:active .pokemon-img,
+    .pokemon-container.clicking .pokemon-img {
+      transform: scale(0.92) rotate(-3deg);
+    }
+
+    .pokemon-name {
+      font-size: 1.6rem;
+      text-transform: capitalize;
+      margin-top: 0.5rem;
+      color: var(--accent);
+    }
+
+    .counter {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .cps {
+      font-size: 1rem;
+      opacity: 0.8;
+    }
+
+    /* ===== SHOP ===== */
+    .upgrade {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #334155;
+      padding: 0.8rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      border: 2px solid transparent;
+    }
+
+    .upgrade:hover:not(.disabled) {
+      background: #475569;
+      transform: translateX(4px);
+    }
+
+    .upgrade.disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .upgrade.affordable {
+      border-color: var(--primary);
+    }
+
+    .upgrade-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .upgrade-name {
+      font-weight: 600;
+    }
+
+    .upgrade-cost {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    .upgrade-owned {
+      background: var(--primary);
+      color: white;
+      font-size: 0.8rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 20px;
+      min-width: 28px;
+      text-align: center;
+    }
+
+    /* ===== STATS ===== */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+    }
+
+    .log {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .log-entry {
+      background: #334155;
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      text-align: center;
+      padding: 0.8rem;
+      background: var(--card);
+      font-size: 0.85rem;
+      opacity: 0.7;
+      border-top: 1px solid #334155;
+    }
+
+    /* ===== ANIMACIONES ===== */
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .pokemon-img {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+      }
+
+      .panel {
+        max-height: 320px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .player-info {
+        justify-content: center;
+      }
+
+      .counter {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <h1>⚡ Pokémon Clicker</h1>
+    <div class="player-info">
+      <input type="text" id="playerName" placeholder="Tu nombre" maxlength="20" />
+      <input type="color" id="themeColor" class="color-picker" value="#ef4444" title="Color del tema" />
+    </div>
+    <button id="saveBtn">💾 Guardar</button>
+    <button id="resetBtn">🔄 Reset</button>
+  </header>
+
+  <!-- MAIN -->
+  <main>
+    <!-- SHOP -->
+    <section class="panel" id="shop">
+      <h2>🛒 Tienda</h2>
+      <!-- Se llena con JS -->
+    </section>
+
+    <!-- CENTRO -->
+    <section class="center panel">
+      <div class="pokemon-container" id="clickArea">
+        <img id="pokemonImg" class="pokemon-img" src="" alt="Pokémon" />
+        <div class="pokemon-name" id="pokemonName">Cargando...</div>
+      </div>
+      <div>
+        <div class="counter" id="money">0</div>
+        <div class="cps" id="cps">0 / seg</div>
+      </div>
+      <p style="opacity:0.6; font-size:0.9rem;">Haz clic o presiona Espacio</p>
+    </section>
+
+    <!-- STATS -->
+    <section class="panel">
+      <h2>📊 Stats</h2>
+      <div class="stat-row">
+        <span>Clics totales</span>
+        <span id="totalClicks">0</span>
+      </div>
+      <div class="stat-row">
+        <span>Nivel</span>
+        <span id="level">1</span>
+      </div>
+      <div class="stat-row">
+        <span>Pokémon actual</span>
+        <span id="currentPokemon">—</span>
+      </div>
+      <h2 style="margin-top:1rem;">📜 Log</h2>
+      <div class="log" id="log"></div>
+    </section>
+  </main>
+
+  <footer>
+    Usa teclas 1-4 para comprar · Espacio = clic · Los datos se guardan automáticamente
+  </footer>
+
+  <script>
+    // ====================== ESTADO ======================
+    const state = {
+      money: 0,
+      totalClicks: 0,
+      level: 1,
+      playerName: "Entrenador",
+      themeColor: "#ef4444",
+      currentPokemon: null,
+      upgrades: [
+        { id: 1, name: "Poke Ball",    baseCost: 15,   cps: 0.1,  owned: 0 },
+        { id: 2, name: "Entrenador",   baseCost: 100,  cps: 1,    owned: 0 },
+        { id: 3, name: "Gimnasio",     baseCost: 500,  cps: 8,    owned: 0 },
+        { id: 4, name: "Laboratorio",  baseCost: 3000, cps: 50,   owned: 0 }
+      ]
+    };
+
+    // ====================== DOM ======================
+    const $ = id => document.getElementById(id);
+    const moneyEl      = $("money");
+    const cpsEl        = $("cps");
+    const totalClicksEl= $("totalClicks");
+    const levelEl      = $("level");
+    const pokemonImg   = $("pokemonImg");
+    const pokemonName  = $("pokemonName");
+    const currentPoke  = $("currentPokemon");
+    const shopEl       = $("shop");
+    const logEl        = $("log");
+    const playerNameEl = $("playerName");
+    const themeColorEl = $("themeColor");
+    const clickArea    = $("clickArea");
+
+    // ====================== UTILIDADES ======================
+    function format(n) {
+      return Math.floor(n).toLocaleString("es-ES");
+    }
+
+    function addLog(msg) {
+      const entry = document.createElement("div");
+      entry.className = "log-entry";
+      entry.textContent = msg;
+      logEl.prepend(entry);
+      if (logEl.children.length > 30) logEl.lastChild.remove();
+    }
+
+    function getCost(up) {
+      return Math.floor(up.baseCost * Math.pow(1.15, up.owned));
+    }
+
+    function getTotalCPS() {
+      return state.upgrades.reduce((sum, u) => sum + u.cps * u.owned, 0);
+    }
+
+    // ====================== RENDER ======================
+    function render() {
+      moneyEl.textContent = format(state.money);
+      cpsEl.textContent = format(getTotalCPS()) + " / seg";
+      totalClicksEl.textContent = format(state.totalClicks);
+      levelEl.textContent = state.level;
+
+      // Shop
+      shopEl.innerHTML = "<h2>🛒 Tienda</h2>";
+      state.upgrades.forEach(up => {
+        const cost = getCost(up);
+        const canBuy = state.money >= cost;
+        const div = document.createElement("div");
+        div.className = `upgrade ${canBuy ? "affordable" : "disabled"}`;
+        div.dataset.id = up.id;
+        div.innerHTML = `
+          <div class="upgrade-info">
+            <span class="upgrade-name">${up.name}</span>
+            <span class="upgrade-cost">${format(cost)} ₽ · +${up.cps}/s</span>
+          </div>
+          <span class="upgrade-owned">${up.owned}</span>
+        `;
+        div.addEventListener("click", () => buyUpgrade(up.id));
+        shopEl.appendChild(div);
+      });
+    }
+
+    // ====================== LÓGICA ======================
+    function clickPokemon() {
+      state.money += 1 + Math.floor(getTotalCPS() * 0.05); // pequeño bonus
+      state.totalClicks++;
+      clickArea.classList.add("clicking");
+      setTimeout(() => clickArea.classList.remove("clicking"), 150);
+      render();
+      checkLevel();
+    }
+
+    function buyUpgrade(id) {
+      const up = state.upgrades.find(u => u.id === id);
+      const cost = getCost(up);
+      if (state.money < cost) return;
+      state.money -= cost;
+      up.owned++;
+      addLog(`Compraste ${up.name} (#${up.owned})`);
+      render();
+      save();
+    }
+
+    function checkLevel() {
+      const next = state.level * 50;
+      if (state.totalClicks >= next) {
+        state.level++;
+        addLog(`¡Subiste al nivel ${state.level}!`);
+        loadRandomPokemon(); // nuevo Pokémon al subir de nivel
+      }
+    }
+
+    // ====================== API ======================
+    async function loadRandomPokemon() {
+      try {
+        const id = Math.floor(Math.random() * 1010) + 1;
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+        const data = await res.json();
+
+        state.currentPokemon = {
+          name: data.name,
+          sprite: data.sprites.other["official-artwork"].front_default || data.sprites.front_default
+        };
+
+        pokemonImg.src = state.currentPokemon.sprite;
+        pokemonName.textContent = state.currentPokemon.name;
+        currentPoke.textContent = state.currentPokemon.name;
+        addLog(`¡Apareció ${state.currentPokemon.name}!`);
+      } catch (e) {
+        pokemonName.textContent = "Error al cargar";
+        addLog("No se pudo cargar el Pokémon");
+      }
+    }
+
+    // ====================== PERSONALIZACIÓN ======================
+    function applyTheme(color) {
+      document.documentElement.style.setProperty("--primary", color);
+      // calcular un poco más oscuro
+      document.documentElement.style.setProperty("--primary-dark", color);
+    }
+
+    playerNameEl.addEventListener("input", e => {
+      state.playerName = e.target.value || "Entrenador";
+      document.title = `${state.playerName} · Pokémon Clicker`;
+    });
+
+    themeColorEl.addEventListener("input", e => {
+      state.themeColor = e.target.value;
+      applyTheme(state.themeColor);
+    });
+
+    // ====================== GUARDADO ======================
+    function save() {
+      localStorage.setItem("pokeClicker", JSON.stringify(state));
+      addLog("Progreso guardado");
+    }
+
+    function load() {
+      const raw = localStorage.getItem("pokeClicker");
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        Object.assign(state, data);
+        playerNameEl.value = state.playerName;
+        themeColorEl.value = state.themeColor;
+        applyTheme(state.themeColor);
+        if (state.currentPokemon) {
+          pokemonImg.src = state.currentPokemon.sprite;
+          pokemonName.textContent = state.currentPokemon.name;
+          currentPoke.textContent = state.currentPokemon.name;
+        }
+      } catch (e) {
+        console.error("Error al cargar guardado");
+      }
+    }
+
+    function reset() {
+      if (!confirm("¿Seguro que quieres borrar todo el progreso?")) return;
+      localStorage.removeItem("pokeClicker");
+      location.reload();
+    }
+
+    // ====================== EVENTOS ======================
+    clickArea.addEventListener("click", clickPokemon);
+
+    document.addEventListener("keydown", e => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        clickPokemon();
+      }
+      if (["1","2","3","4"].includes(e.key)) {
+        buyUpgrade(Number(e.key));
+      }
+    });
+
+    $("saveBtn").addEventListener("click", save);
+    $("resetBtn").addEventListener("click", reset);
+
+    // Generación pasiva
+    setInterval(() => {
+      const cps = getTotalCPS();
+      if (cps > 0) {
+        state.money += cps / 10; // cada 100ms
+        render();
+      }
+    }, 100);
+
+    // Auto-save cada 30s
+    setInterval(save, 30000);
+
+    // ====================== INICIO ======================
+    load();
+    render();
+    if (!state.currentPokemon) loadRandomPokemon();
+    applyTheme(state.themeColor);
+    playerNameEl.value = state.playerName;
+    document.title = `${state.playerName} · Pokémon Clicker`;
+    addLog("¡Bienvenido, entrenador!");
+  </script>
+</body>
+</html>
